@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import nodemailer from "nodemailer";
 import mongoose from "mongoose";
+import { Resend } from "resend";
 
 dotenv.config();
 
@@ -15,6 +15,8 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch((error) => console.log(error));
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const messageSchema = new mongoose.Schema({
   name: String,
@@ -40,20 +42,9 @@ app.post("/api/contact", async (req, res) => {
 
     await newMessage.save();
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
       to: process.env.EMAIL_USER,
-      replyTo: email,
       subject: `Portfolio Message from ${name}`,
       html: `
         <h2>New Portfolio Message</h2>
@@ -61,6 +52,7 @@ app.post("/api/contact", async (req, res) => {
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Message:</strong> ${message}</p>
       `,
+      reply_to: email,
     });
 
     res.status(200).json({
