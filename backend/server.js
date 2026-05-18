@@ -14,7 +14,13 @@ mongoose
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://fullstack-portfolio-jet.vercel.app",
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.post("/api/contact", async (req, res) => {
